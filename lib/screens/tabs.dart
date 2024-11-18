@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:meals_app/date/dummy_date.dart';
-import 'package:meals_app/models/meal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meals_app/providers/favorites_provider.dart';
+import 'package:meals_app/providers/filters_provider.dart';
 import 'package:meals_app/screens/categories.dart';
 import 'package:meals_app/screens/filters.dart';
 import 'package:meals_app/screens/meals.dart';
@@ -13,47 +14,46 @@ const KInitialFilters = {
   Filter.vegetarian: false
 };
 
-class TabsScreen extends StatefulWidget {
+//  the ConsumerStatefulWidget is a custom widget provided by the RiverPod package adding additional utilities
+class TabsScreen extends ConsumerStatefulWidget {
   const TabsScreen({super.key});
 
   @override
-  State<TabsScreen> createState() {
+  ConsumerState<TabsScreen> createState() {
     return _TabsScreenState();
   }
 }
 
-class _TabsScreenState extends State<TabsScreen> {
+class _TabsScreenState extends ConsumerState<TabsScreen> {
   int _selectedPageIndex = 0;
 
-  final List<Meal> _favoriteMeals = [];
+  // Map<Filter, bool> _selectedFilters = KInitialFilters;
 
-  Map<Filter, bool> _selectedFilters = KInitialFilters;
+  // void _showInfoMessage(String message) {
+  //   ScaffoldMessenger.of(context).clearSnackBars();
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       duration: Duration(seconds: 2),
+  //       content: Text(message),
+  //     ),
+  //   );
+  // }
 
-  void _showInfoMessage(String message) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: Duration(seconds: 2),
-        content: Text(message),
-      ),
-    );
-  }
+  // void _toggleMealFavoriteStatus(Meal meal) {
+  //   final isExisting = _favoriteMeals.contains(meal);
 
-  void _toggleMealFavoriteStatus(Meal meal) {
-    final isExisting = _favoriteMeals.contains(meal);
-
-    if (isExisting) {
-      setState(() {
-        _favoriteMeals.remove(meal);
-      });
-      _showInfoMessage("Meal in no longer a favorite");
-    } else {
-      setState(() {
-        _favoriteMeals.add(meal);
-      });
-      _showInfoMessage("Meal added to the favorite list");
-    }
-  }
+  //   if (isExisting) {
+  //     setState(() {
+  //       _favoriteMeals.remove(meal);
+  //     });
+  //     _showInfoMessage("Meal in no longer a favorite");
+  //   } else {
+  //     setState(() {
+  //       _favoriteMeals.add(meal);
+  //     });
+  //     _showInfoMessage("Meal added to the favorite list");
+  //   }
+  // }
 
   void _selectPage(int index) {
     setState(() {
@@ -71,44 +71,35 @@ class _TabsScreenState extends State<TabsScreen> {
       // using pushReplacement instead of push will result in the FiltersScreen not having the back arrow button
       //!note: the push method here returns a future and it will resolve to the date returned by the screen that the user navigates too, so it will get the map from the PopScope widget
       //! so to make use the data we should make the function as async and handle as promise
-      final result = await Navigator.of(context).push<Map<Filter, bool>>(
+      // final result =
+      await Navigator.of(context).push<Map<Filter, bool>>(
         MaterialPageRoute(
-          builder: (ctx) => FiltersScreen(currentFilters: _selectedFilters),
+          builder: (ctx) => const FiltersScreen(),
         ),
       );
-      setState(() {
-        _selectedFilters = result ?? KInitialFilters;
-      });
+      // setState(() {
+      //   _selectedFilters = result ?? KInitialFilters;
+      // });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final availableMeals = dummyMeals.where((meal) {
-      if (_selectedFilters[Filter.glutenFree]! && !meal.isGlutenFree) {
-        return false;
-      }
-      if (_selectedFilters[Filter.lactoseFree]! && !meal.isLactoseFree) {
-        return false;
-      }
-      if (_selectedFilters[Filter.vegan]! && !meal.isVegan) {
-        return false;
-      }
-      if (_selectedFilters[Filter.vegetarian]! && !meal.isVegetarian) {
-        return false;
-      }
-      return true;
-    }).toList();
+    //  the WidgetRef ref is available because we are using the ConsumerStateFulWidget
+    //  ref.read gets the date from the provide once
+    // ref.watch puts an active listener that makes sure that the build method executes on very changes
+
+    final availableMeals = ref.watch(filteredMealsProvider);
 
     Widget activePage = CategoriesScreen(
-      onToggleFavorite: _toggleMealFavoriteStatus,
       availableMeals: availableMeals,
     );
     var activePageTitle = 'Categories';
     if (_selectedPageIndex == 1) {
+      final favoriteMeals = ref.watch(favoriteMealsProvider);
+
       activePage = MealsScreen(
-        meals: _favoriteMeals,
-        onToggleFavorite: _toggleMealFavoriteStatus,
+        meals: favoriteMeals,
       );
       activePageTitle = "Your Favorites";
     }
