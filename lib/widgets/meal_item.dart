@@ -42,12 +42,16 @@ class MealItem extends StatelessWidget {
             // in the Stack widgets the widgets inside the children will be stacked from back to front accordingly
             // flutter pub add transparent_image - to install the package
 
-            FadeInImage(
-              placeholder: MemoryImage(kTransparentImage),
-              image: NetworkImage(meal.imageUrl),
-              fit: BoxFit.cover,
-              height: 200,
-              width: double.infinity,
+            // the Hero widget is responsible to animate Widgets across multiple screens
+            Hero(
+              tag: meal.id,
+              child: FadeInImage(
+                placeholder: MemoryImage(kTransparentImage),
+                image: NetworkImage(meal.imageUrl),
+                fit: BoxFit.cover,
+                height: 200,
+                width: double.infinity,
+              ),
             ),
             Positioned(
               bottom: 0,
